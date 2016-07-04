@@ -1,0 +1,20 @@
+{
+  "name": "website",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": "0.12.6"
+  },
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "azure-event-hubs": "0.0.1",
+    "azure-iot-common": "^1.0.4",
+    "azure-iothub": "^1.0.4",
+    "coffee-script": "^1.10.0",
+    "connect": "^3.4.1",
+    "express.io": "^1.1.13",
+    "uuid": "^2.0.2"
+  }
+}
