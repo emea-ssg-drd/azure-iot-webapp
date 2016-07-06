@@ -3,7 +3,7 @@ var uuid = require('uuid');
 var fs = require('fs');
 
 
-//var EventHubClient = require('azure-event-hubs').Client;
+var EventHubClient = require('azure-event-hubs').Client;
 var IotHubClient = require('azure-iothub').Client;
 var Message = require('azure-iot-common').Message;
 app = express().http().io()
