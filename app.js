@@ -122,11 +122,10 @@ app.io.route('ready', function(req) {
                         try {
                             var resource = getResources("sensor", body.sensorType);
                             if ( resource ) {
-                                var data = [];
-                                data[0] = (new Date()).getTime();  
-                                data[1] =  body.sensorValue;
+                                var ts = (new Date()).getTime();  
+                                var value =  body.sensorValue;
                                 for(i=0; i<sockets.length; i++) {
-                                    sockets[i].emit("data", resource, data);
+                                    sockets[i].emit("data", resource, ts, value);
                                 }
                             }
                         } catch (err) {
