@@ -1113,5 +1113,5 @@ $(function()
         });
 });
  
-io.emit('ready');
+socket.emit('ready');
  // 300 20 39   
