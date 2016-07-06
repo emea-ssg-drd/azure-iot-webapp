@@ -498,7 +498,7 @@ socket.on('data', function(resource, ts, val)
 			var ledColor = resource.ledColor;
 			if ( ledColor != null && resource.output.hasOwnProperty('min') && resource.output.hasOwnProperty('max')) 
 			{
-				if ( v[1] < resource.output.min || v[1] > resource.output.max ) 
+				if ( val < resource.output.min || val > resource.output.max ) 
 				{
 					ledColor  = steelseries.LedColor.RED_LED;
 				}
@@ -514,7 +514,7 @@ socket.on('data', function(resource, ts, val)
 				}
 			}
 
-			if ( v[1] >= resource.threshold ) 
+			if ( val >= resource.threshold ) 
 			{
 				resource.alert = true;
 			} 
