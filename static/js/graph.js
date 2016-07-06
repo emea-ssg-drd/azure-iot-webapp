@@ -43,6 +43,7 @@ var initializeLabels = function (data) {
 
 io.on('data', function (incomingData) {
     // Initialize labels from incoming data
+    console.log(incomingData);
     if (labels === null) {
         initializeLabels(incomingData);
     }
