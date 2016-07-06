@@ -120,6 +120,7 @@ app.io.route('ready', function(req) {
                         console.log(message.body);
                         var body = message.body;
                         try {
+                            app.io.broadcast('data', null, body);
                             var resource = getResources("sensor", body.sensorType);
                             if ( resource ) {
                                 var data = [];

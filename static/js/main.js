@@ -538,7 +538,7 @@ socket.on('history', function(resource, a, clear)
 
 socket.on('data', function(resource, new_data) 
 {
-	
+	console.log(data);
 	resource = getLocalResource(resource);
 	if ( resource && new_data.length > 0 ) 
 	{
