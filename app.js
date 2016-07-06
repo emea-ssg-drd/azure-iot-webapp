@@ -9,9 +9,8 @@ var Message = require('azure-iot-common').Message;
 app = express().http().io()
 
 var iotHubConnectionString = process.env.THINGLABS_IOTHUB_CONNSTRING || ''
-var eventHubConnectionString = process.env.THINGLABS_EVENTHUB_CONNSTRING || 'Endpoint=sb://inteliotgw-eh-ns.servicebus.windows.net/;SharedAccessKeyName=inteliotgwaccesspolicy;SharedAccessKey=FdBHNmynEyqF75JEKYHRHSJxAHjON6KzH8OilkFMN7Y=;EntityPath=inteliotgw-eh'
-
-//var client = EventHubClient.fromConnectionString(eventHubConnectionString, 'thinglabseventhub')
+var eventHubConnectionString = process.env.THINGLABS_EVENTHUB_CONNSTRING || ''
+var client = EventHubClient.fromConnectionString(eventHubConnectionString, 'thinglabseventhub')
 
 var limit=30;
 var interval=1;
