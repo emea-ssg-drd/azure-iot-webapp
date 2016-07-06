@@ -473,18 +473,19 @@ socket.on('history', function(resource, a, clear)
 });
 
 
-socket.on('data', function(resource, new_data) 
+socket.on('data', function(resource, ts, val) 
 {
-	console.log(new_data);
 	resource = getLocalResource(resource);
-	if ( resource && new_data.length > 0 ) 
+	if ( resource ) 
 	{
-		var v = new_data[0];
-		console.log(v);
-		var ts = v[0]-zone_delta;
+		var ts = ts -zone_delta;
+		if ( current_resource && current_resource == resource ) 
+		{
+			data.push([ts, val]);
+		}   
+
 		if ( resource.canvas  ) 
 		{
-			var val = v[1];
 			if ( resource.sum ) {
 				resource.sum += val;
 				val = resource.sum;
