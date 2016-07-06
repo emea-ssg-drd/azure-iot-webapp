@@ -18,7 +18,7 @@ var chart = c3.generate({
 });
 
 var DATA_POINT_COUNT = 20;
-var LABEL_PREFIXES = /^avg|^min|^max/;
+var LABEL_PREFIXES = /^Temperature/;
 var labels = null;
 var columns = [];
 
