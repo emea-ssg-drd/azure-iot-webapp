@@ -63,6 +63,30 @@
 					"unit": "cm"
     			}
 		},
+		{
+		    "name": "webcam",
+		    "type": "video",
+		    "input": 
+		    	{
+		    		"url": "video.mp4",
+		    	
+				    "targets":
+				    	[
+					    	{
+					    		"target": "default",
+					    		"angle": 90
+					    	},
+					    	{
+					    		"target": "doorbell.main",
+					    		"angle": 30
+					    	},
+					    	{
+					    		"target": "door.garage",
+					    		"angle": 60
+					    	}
+				    	]
+				}
+		},
 
 		{
 		    "name": "livingroom",
@@ -77,6 +101,62 @@
 		    		"gpio": 2,
 		    		"direction": "output"
 		    	}
+		},
+
+		{
+		    "name": "main",
+		    "type": "alarm",
+		    "input": 
+		    	{
+		    		"gpio": 9,
+		    		"direction": "output"
+		    	}
+		},
+
+		{
+		    "name": "garage",
+		    "type": "door",
+		    "input": 
+		    	{
+		    		"direction": "output",
+		    		"gpio": {
+		    					"open":4, 
+		    					"close":6
+		    				}
+		    	}
+		},
+
+		{
+		    "name": "webcam",
+		    "type": "servo2",
+		    "input": 
+		    	{
+		    		"gpio": 5,
+		    		"direction": "output"
+		    	}
+		},
+
+		{
+		    "name": "car",
+		    "type": "light",
+		    "input": 
+		    	{
+		    		"gpio": 5,
+		    		"direction": "output"
+		    	}
+		},
+		{
+		    "name": "main",
+		    "type": "doorbell",
+		    "input": 
+		    	{
+		    		"gpio": 7,
+		    		"direction": "input"
+		    	}
+		},
+		{
+		    "name": "lcd",
+		    "type": "xdisplay"
 		}
 ]
 

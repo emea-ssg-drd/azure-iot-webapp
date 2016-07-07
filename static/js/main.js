@@ -54,6 +54,9 @@ function mainControl(resource, active) {
 	else {
 		updateDisplay()
 	}
+	if ( isResource(resource, "video", "webcam") && resource.peripheral_toogle ) {
+		resource.peripheral_toogle.toggle(true);
+	}
 }
 
 function peripheralControl(resource, active){
@@ -78,6 +81,51 @@ function peripheralControl(resource, active){
 			}
 		}
 	}
+	else if ( isResource(resource, "video", "webcam" ) ) {
+		enable_webcam(resource, active);
+		
+	}
+	else if ( isResource(resource, "door", "garage" ) ) {
+
+		if ( !resource.door_garage_manual ) {
+			resource.door_garage_manual = $(".toggle[name=door_garage_manual]");
+			if ( resource.door_garage_manual ) {
+				resource.door_garage_manual.on('toggle', function (e, m_active) {
+					if ( resource.container ) {
+						resource.container.attr("src", "/images/garage.jpg")
+					}
+					command(resource,{state:m_active?"open":"close"});
+				});
+				resource.door_garage_manual.toggles(false);
+			}
+		}
+		if ( !resource.door_garage_auto ) {
+			resource.door_garage_auto = $(".toggle[name=door_garage_auto]");
+			if ( resource.door_garage_auto ) {
+				resource.door_garage_auto.on('toggle', function (e, a_active) {
+					if ( resource.container ) {
+						resource.container.attr("src", a_active ? "/images/car_on.jpg" : "/images/car_off.jpg")
+					}
+					command(getResources("light","car"),{state:a_active?"on":"off"});
+					
+				});
+				resource.door_garage_auto.toggles(false);
+			}
+		}
+		if ( active ) {
+			resource.door_garage_manual.hide();
+			resource.door_garage_auto.toggles(true);
+			resource.door_garage_auto.toggles(false);
+			resource.door_garage_auto.show();
+		}
+		else {
+			resource.door_garage_auto.hide();
+			resource.door_garage_manual.toggles(true);
+			resource.door_garage_manual.toggles(false);
+			resource.door_garage_manual.show();
+		}
+	}
+	
 }
 
 function peripheralInput(resource, onChange, value){
@@ -90,7 +138,9 @@ function peripheralInput(resource, onChange, value){
 			resource.canvas.setValue(value);
 		}
 	}
-	
+	else if ( isResource(resource, "video", "webcam" ) ) {
+		command(getResources("servo", "webcam"), {angle:parseInt(value)})
+	}
 }
 
 function getResources(type,name) {
@@ -400,6 +450,19 @@ function resourceNewData(resource, val) {
 			}
 		}
 	}
+	else if ( isResource(resource,"sensor", "light") || isResource(resource,"sensor", "proximity") ) {
+		var garage = getResources("door", "garage");
+		if ( garage ) {
+			if ( garage.peripheral_toogle && garage.peripheral_toogle.active ) {	
+				if ( ( isResource(resource,"sensor", "light") && val >= 1) ||
+					 ( isResource(resource,"sensor", "proximity") && val < 15 ) ) {
+				 	if ( garage.door_garage_manual ) {
+						garage.door_garage_manual.toggles(true);
+					}
+				}
+			}
+		}
+	}
 }
 /*-------------------------------------------------------------------------------------------------------------------*/
 /*  To Client   */
@@ -473,19 +536,17 @@ socket.on('history', function(resource, a, clear)
 });
 
 
-socket.on('data', function(resource, ts, val) 
+socket.on('data', function(resource, new_data) 
 {
+	
 	resource = getLocalResource(resource);
-	if ( resource ) 
+	if ( resource && new_data.length > 0 ) 
 	{
-		var ts = ts -zone_delta;
-		if ( current_resource && current_resource == resource ) 
-		{
-			data.push([ts, val]);
-		}   
-
+		var v = new_data[0];
+		var ts = v[0]-zone_delta;
 		if ( resource.canvas  ) 
 		{
+			var val = v[1];
 			if ( resource.sum ) {
 				resource.sum += val;
 				val = resource.sum;
@@ -498,7 +559,7 @@ socket.on('data', function(resource, ts, val)
 			var ledColor = resource.ledColor;
 			if ( ledColor != null && resource.output.hasOwnProperty('min') && resource.output.hasOwnProperty('max')) 
 			{
-				if ( val < resource.output.min || val > resource.output.max ) 
+				if ( v[1] < resource.output.min || v[1] > resource.output.max ) 
 				{
 					ledColor  = steelseries.LedColor.RED_LED;
 				}
@@ -514,7 +575,7 @@ socket.on('data', function(resource, ts, val)
 				}
 			}
 
-			if ( val >= resource.threshold ) 
+			if ( v[1] >= resource.threshold ) 
 			{
 				resource.alert = true;
 			} 
@@ -803,6 +864,57 @@ function flot()
 	});
 }
 
+/*-------------------------------------------------------------------------------------------------------------------*/
+/*  Video   */
+/*-------------------------------------------------------------------------------------------------------------------*/
+
+var webcamvideoOn = false;
+function enable_webcam(resource,enable) {
+	console.log("WC "+JSON.stringify(resource))
+	if (resource == getResources("video","webcam") ) {
+		var img_div = $('img#'+resource.type+"_"+resource.name);
+	    var video_div = $('video#'+resource.type+"_"+resource.name);
+
+	    if (enable) {
+	    	
+	    	if ( img_div.length ) {
+	    		img_div.hide();
+	    	}
+	    	
+	    	if ( video_div.length && resource.input && resource.input.url ) {
+		    	video_div.show();
+		    	if ( webcamvideoOn == false ) {
+		    		webcamvideoOn = true;
+		    		video_div.attr("src", resource.input.url);
+					var video = video_div.get(0);
+					video.load();
+					video.play();
+		    	}
+		    	
+		    	if ( resource.input.targets ) {
+		    		if ( !resource.target ) {
+		    			resource.target = "default";
+		    		}
+		    		for(i=0; i<resource.input.targets.length; i++ ) {
+		    			if ( resource.input.targets[i].target == resource.target ) {
+		    				var val = resource.input.targets[i].angle;
+		    				command(getResources("servo", "webcam"),  {angle:val})
+		    			}
+		    		}
+		    	}
+		    }
+	    }
+	    else {
+	    	if ( video_div.length ) {
+		    	video_div.hide();
+		    }
+	    	if ( img_div.length ) {
+	    		img_div.show();
+	    	}
+	    }
+	}
+}
+
 
 /*-------------------------------------------------------------------------------------------------------------------*/
 /*  Init   */
@@ -842,6 +954,31 @@ $(function()
 			$('output#history').text(period.name);      
 		}      
 	});
+/*
+	// webcam
+    $('input[name=webcam]').on('change', function (e) {
+    	socket.emit("webcamTurn", e.target.value);   
+    });
+
+	// lighting
+	$('input[name=lighting_ctl]').on('change', function (e) 
+	{
+		socket.emit("setBrightness", e.target.value);   
+	});
+
+	// thermostat
+	$('input[name=thermostat]').on('input', function (e) 
+	{
+		if ( thermostat.canvas ) {
+			thermostat.canvas.setValue(e.target.value);
+		}	 
+	});
+	$('input[name=thermostat]').on('change', function (e) 
+	{
+		if ( thermostat.canvas ) {
+			thermostat.canvas.setValue(e.target.value);
+		}	 
+	});*/
 
 });
 
@@ -851,6 +988,22 @@ $(function()
 	$('.toggle').toggles( {
 							'on' : true
 						});
+
+	$('.toggle[name="door_garage"]').toggles({ 
+												'on' : true,
+												'text' : {
+													'on' : "Auto",
+													'off': "Manual"
+												}
+											})
+
+	$('.toggle[name="door_garage_manual"]').toggles({
+													'on' : true,
+													'text' : {
+														'on' : "Opened",
+														'off': "Closed"
+													}
+												})
 
 
 	$('.toggle[name=autoscroll]').on('toggle', function (e, active) 
@@ -960,5 +1113,4 @@ $(function()
         });
 });
  
-socket.emit('ready');
  // 300 20 39   

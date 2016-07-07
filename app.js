@@ -3,14 +3,14 @@ var uuid = require('uuid');
 var fs = require('fs');
 
 
-var EventHubClient = require('azure-event-hubs').Client;
+//var EventHubClient = require('azure-event-hubs').Client;
 var IotHubClient = require('azure-iothub').Client;
 var Message = require('azure-iot-common').Message;
 app = express().http().io()
 
 var iotHubConnectionString = process.env.THINGLABS_IOTHUB_CONNSTRING || ''
 var eventHubConnectionString = process.env.THINGLABS_EVENTHUB_CONNSTRING || ''
-var client = EventHubClient.fromConnectionString(eventHubConnectionString, 'thinglabseventhub')
+//var client = EventHubClient.fromConnectionString(eventHubConnectionString, 'thinglabseventhub')
 
 var limit=30;
 var interval=1;
@@ -107,13 +107,11 @@ app.use(express.static(__dirname + '/static'));
 
 // Instantiate an eventhub client
 
-app.io.route('ready', function(req) {
+function receiver(socket) {
     // For each partition, register a callback function
     client.getPartitionIds().then(function(ids) {
         ids.forEach(function(id) {
-            var minutesAgo = 5;
-            var before = (minutesAgo*60*1000);
-            client.createReceiver('$Default', id, { startAfterTime: Date.now() - before })
+            client.createReceiver('$Default', id, { startAfterTime: Date.now() })
                 .then(function(rx) {
                     rx.on('errorReceived', function(err) { console.log(err); });
                     rx.on('message', function(message) {
@@ -122,11 +120,9 @@ app.io.route('ready', function(req) {
                         try {
                             var resource = getResources("sensor", body.sensorType);
                             if ( resource ) {
-                                var ts = (new Date()).getTime();  
-                                var value =  body.sensorValue;
-                                for(i=0; i<sockets.length; i++) {
-                                    sockets[i].emit("data", resource, ts, value);
-                                }
+                                var data = [];
+                                data.push([(new Date()).getTime(), body.sensorValue]);
+                                socket.emit("data", resource, data);
                             }
                         } catch (err) {
                             console.log("Error sending: " + body);
@@ -136,7 +132,7 @@ app.io.route('ready', function(req) {
                 });
         });
     });
-});
+};
 
 //-----------------------------------------------------------------------------------------------------
 //  Connection
@@ -151,6 +147,8 @@ app.io.sockets.on('connection', function(socket) {
     for(i=0;i<resources.length;i++) {
         socket.emit("add",  resources[i]);
     }
+    
+    receiver(socket);
 
     socket.on('disconnect', function () {
       sockets.splice( sockets.indexOf(socket),1);
