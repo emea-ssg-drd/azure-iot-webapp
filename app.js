@@ -15,6 +15,7 @@ var client = EventHubClient.fromConnectionString(eventHubConnectionString, 'thin
 var limit=30;
 var interval=1;
 var sockets = [];
+var currentResource = null;
 
 // Setup your sessions, just like normal.
 app.use(express.cookieParser())
@@ -105,9 +106,53 @@ app.post('/:deviceId/led/:state', function (req, res) {
 
 app.use(express.static(__dirname + '/static'));
 
-// Instantiate an eventhub client
+function history(socket,data,period,resource,max) {
+    var ago =  (new Date()).getTime() - period*1000;
 
-function receiver(socket) {
+    if ( data && data.length > 0 ) {
+        var all_d=[];
+        var ratio = Math.ceil(data.length/max);
+        if ( ratio > 0) {
+            for( i=0, sum=0, nbsamples=0, l=data.length; i<l; i++, nbsamples++) {
+                if ( nbsamples == ratio || i==l-1 ) {
+                    if ( nbsamples ) {
+                        data[i][1] = (sum/nbsamples);
+                        all_d.push(JSON.parse(data[i]));
+                    }
+                    nbsamples = 0;
+                    sum = 0;
+                }
+                else {
+                    sum += data[i][1];
+                }
+            }
+        }
+
+        if( all_d.length > 0 ) {
+            socket.emit('history', resource, all_d,true);
+        }
+    }
+}
+
+function newData(socket,resource,data) {
+
+    if ( resource ) {
+        var now = (new Date()).getTime();
+
+        if ( (now - resource.lastUpdateTime ) >= interval*1000 ) {
+
+            socket.emit("data", resource, data);
+
+            if ( currentResource && currentResource == resource ) {
+                socket.emit('history',resource, data);
+            }
+
+            resource.lastUpdateTime = now;  
+        }
+    }
+}
+
+function receiver() {
     // For each partition, register a callback function
     client.getPartitionIds().then(function(ids) {
         ids.forEach(function(id) {
@@ -122,6 +167,9 @@ function receiver(socket) {
                             if ( resource ) {
                                 var data = [];
                                 data.push([(new Date()).getTime(), body.sensorValue]);
+                                for(i=0; i,sockets.length; i++) {
+                                    newData(sockets[i],resource,data);
+                                }
                                 socket.emit("data", resource, data);
                             }
                         } catch (err) {
@@ -145,10 +193,47 @@ app.io.sockets.on('connection', function(socket) {
     sockets.push(socket);
 
     for(i=0;i<resources.length;i++) {
+        resources[i].lastUpdateTime = (new Date()).getTime();
         socket.emit("add",  resources[i]);
     }
     
-    receiver(socket);
+    if ( sockets.length == 1 ) {
+        receiver();
+    }
+
+    socket.on( 'selectResource', function(resource) {
+        currentResource = getLocalResource(resource);
+        if ( currentResource ) {
+            currentResource.lastUpdateTime = (new Date()).getTime();
+        }
+    });
+
+    socket.on( 'command', function(resource, cmd) {
+        resource = getLocalResource(resource);
+        console.log("Command : "+resource.oic_type + " -> "+JSON.stringify(cmd))
+        if ( resource && resource.obj ) {
+            resource.obj.put(cmd);  
+        }
+    });
+
+
+    socket.on( 'reqint', function(d) {
+        if(!isNaN(d)) {
+            console.log('setting update interval to %d.', d);
+            interval = d;
+            socket.broadcast.emit('setint', d);
+        }
+    });
+
+    socket.on( 'reqlimit', function(d) {
+        if(!isNaN(d)) {
+            limit = d;
+            if ( currentResource ) {
+                history(socket,null,limit,currentResource,500);
+            }
+        }
+    });
+
 
     socket.on('disconnect', function () {
       sockets.splice( sockets.indexOf(socket),1);

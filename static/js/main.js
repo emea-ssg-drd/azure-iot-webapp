@@ -545,10 +545,6 @@ socket.on('data', function(resource, new_data)
 		var v = new_data[0];
 		var ts = v[0]-zone_delta;
 
-		if ( current_resource && current_resource == resource ) 
-		{
-			data.push([ts, v[1]]);
-		}   
 
 		if ( resource.canvas  ) 
 		{
