@@ -3,7 +3,7 @@ var uuid = require('uuid');
 var fs = require('fs');
 
 
-//var EventHubClient = require('azure-event-hubs').Client;
+var EventHubClient = require('azure-event-hubs').Client;
 var IotHubClient = require('azure-iothub').Client;
 var Message = require('azure-iot-common').Message;
 var Device = require('azure-iot-device');
@@ -12,7 +12,7 @@ app = express().http().io()
 
 var iotHubConnectionString = process.env.THINGLABS_IOTHUB_CONNSTRING || ''
 var eventHubConnectionString = process.env.THINGLABS_EVENTHUB_CONNSTRING || ''
-//var client = EventHubClient.fromConnectionString(eventHubConnectionString, 'thinglabseventhub')
+var client = EventHubClient.fromConnectionString(eventHubConnectionString, 'thinglabseventhub')
 
 var limit=30;
 var interval=1;
