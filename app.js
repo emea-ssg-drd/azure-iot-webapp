@@ -158,10 +158,16 @@ function receiver() {
         ids.forEach(function(id) {
             client.createReceiver('$Default', id, { startAfterTime: Date.now() })
                 .then(function(rx) {
-                    rx.on('errorReceived', function(err) { console.log(err); });
+                    rx.on('errorReceived', function(err) {
+                        console.log(err); 
+                    });
                     rx.on('message', function(message) {
                         console.log(message.body);
+                        for(i=0; i,sockets.length; i++) {
+                            socket.emit("data", null, message.body);
+                        }
                         var body = message.body;
+                        socket.emit('history',resource, data);
                         try {
                             var resource = getResources("sensor", body.sensorType);
                             if ( resource ) {
