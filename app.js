@@ -3,14 +3,16 @@ var uuid = require('uuid');
 var fs = require('fs');
 
 
-var EventHubClient = require('azure-event-hubs').Client;
+//var EventHubClient = require('azure-event-hubs').Client;
 var IotHubClient = require('azure-iothub').Client;
 var Message = require('azure-iot-common').Message;
+var Device = require('azure-iot-device');
+
 app = express().http().io()
 
 var iotHubConnectionString = process.env.THINGLABS_IOTHUB_CONNSTRING || ''
 var eventHubConnectionString = process.env.THINGLABS_EVENTHUB_CONNSTRING || ''
-var client = EventHubClient.fromConnectionString(eventHubConnectionString, 'thinglabseventhub')
+//var client = EventHubClient.fromConnectionString(eventHubConnectionString, 'thinglabseventhub')
 
 var limit=30;
 var interval=1;
@@ -26,6 +28,8 @@ app.get('/', function(req, res) {
     req.session.loginDate = new Date().toString()
     res.sendfile(__dirname + '/index.html')
 });
+
+app.use(express.static(__dirname + '/static'));
 
 //-----------------------------------------------------------------------------------------------------
 //  Resources
@@ -77,35 +81,6 @@ resources = JSON.parse(fs.readFileSync('./resources.js'));
 resources.push ({"name":"cpu", "type":"system"})
 
 
-app.post('/:deviceId/led/:state', function (req, res) { 
-    var deviceId = req.params.deviceId;
-    var ledState = req.params.state;   
-    var messageData = '{"ledState":' + ledState + '}';
-    
-    var client = IotHubClient.fromConnectionString(iotHubConnectionString);
-    client.open(function (err) {
-        if (err) {
-            console.Log('Could not open the connection to the service: ' + err.message);
-        } else {
-            client.send(deviceId, messageData, function (err) {
-                if (err) {
-                    console.Log('Could not send the message to the service: ' + err.message);
-                } else {
-                    client.close(function (err) {
-                        if (err) {
-                            console.Log('Could not close the connection to the service: ' + err.message);
-                        }
-                    });
-                }
-            });
-        }
-    });
-    
-    res.status(200).end();
-});
-
-app.use(express.static(__dirname + '/static'));
-
 function history(socket,data,period,resource,max) {
     var ago =  (new Date()).getTime() - period*1000;
 
@@ -152,7 +127,32 @@ function newData(socket,resource,data) {
     }
 }
 
-function receiver() {
+function send(cmd) {
+    var deviceId = req.params.deviceId;
+    var messageData = '{"command":' + cmd + '}';
+    
+    var client = IotHubClient.fromConnectionString(iotHubConnectionString);
+    client.open(function (err) {
+        if (err) {
+            console.Log('Could not open the connection to the service: ' + err.message);
+        } else {
+            var deviceId = Device.ConnectionString.parse(iotHubConnectionString).DeviceId;
+
+            client.send(deviceId, messageData, function (err) {
+                if (err) {
+                    console.Log('Could not send the message to the service: ' + err.message);
+                } else {
+                    client.close(function (err) {
+                        if (err) {
+                            console.Log('Could not close the connection to the service: ' + err.message);
+                        }
+                    });
+                }
+            });
+        }
+    });
+}
+function receive() {
     // For each partition, register a callback function
     client.getPartitionIds().then(function(ids) {
         ids.forEach(function(id) {
@@ -177,6 +177,11 @@ function receiver() {
                                     newData(sockets[i],resource,data);
                                 }
                                 socket.emit("data", resource, data);
+                            }
+                            else if ( resource == getResources("system", body.sensorType) ) {
+                                for(i=0; i<sockets.length; i++) {
+                                    sockets[i].emit('system', { cpu:body.cpu, ram: body.ram });
+                                }
                             }
                         } catch (err) {
                             console.log("Error sending: " + body);
@@ -204,7 +209,7 @@ app.io.sockets.on('connection', function(socket) {
     }
     
     //if ( sockets.length == 1 ) {
-        receiver();
+        receive();
     //}
 
     socket.on( 'selectResource', function(resource) {
@@ -215,10 +220,9 @@ app.io.sockets.on('connection', function(socket) {
     });
 
     socket.on( 'command', function(resource, cmd) {
-        resource = getLocalResource(resource);
         console.log("Command : "+resource.oic_type + " -> "+JSON.stringify(cmd))
-        if ( resource && resource.obj ) {
-            resource.obj.put(cmd);  
+        if ( resource ) {
+            send(cmd);  
         }
     });
 
