@@ -538,14 +538,16 @@ socket.on('history', function(resource, a, clear)
 
 socket.on('data', function(resource, new_data) 
 {
-	console.log(new_data);
 	resource = getLocalResource(resource);
 	if ( resource && new_data.length > 0 ) 
 	{
 		var v = new_data[0];
 		var ts = v[0]-zone_delta;
 
-
+		if ( current_resource && current_resource == resource ) 
+		{
+			data.push([ts, v[1]]);
+		}
 		if ( resource.canvas  ) 
 		{
 			var val = v[1];

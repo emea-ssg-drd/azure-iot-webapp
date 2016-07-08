@@ -12,6 +12,7 @@
     "azure-event-hubs": "0.0.1",
     "azure-iot-common": "^1.0.4",
     "azure-iothub": "^1.0.4",
+    "azure-iot-device": "^1.0.9",
     "coffee-script": "^1.10.0",
     "connect": "^3.4.1",
     "express.io": "^1.1.13",

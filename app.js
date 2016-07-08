@@ -6,7 +6,7 @@ var fs = require('fs');
 var EventHubClient = require('azure-event-hubs').Client;
 var IotHubClient = require('azure-iothub').Client;
 var Message = require('azure-iot-common').Message;
-//var Device = require('azure-iot-device');
+var Device = require('azure-iot-device');
 
 app = express().http().io()
 
@@ -114,16 +114,12 @@ function newData(socket,resource,data) {
     if ( resource ) {
         var now = (new Date()).getTime();
 
-      //  if ( (now - resource.lastUpdateTime ) >= interval*1000 ) {
+        if ( (now - resource.lastUpdateTime ) >= interval*1000 ) {
 
             socket.emit("data", resource, data);
 
-            if ( currentResource && currentResource == resource ) {
-                socket.emit('history',resource, data);
-            }
-
             resource.lastUpdateTime = now;  
-       // }
+        }
     }
 }
 
@@ -136,7 +132,7 @@ function send(cmd) {
         if (err) {
             console.Log('Could not open the connection to the service: ' + err.message);
         } else {
-            var deviceId = "SensorHub";//Device.ConnectionString.parse(iotHubConnectionString).DeviceId;
+            var deviceId = Device.ConnectionString.parse(iotHubConnectionString).DeviceId;
 
             client.send(deviceId, messageData, function (err) {
                 if (err) {
@@ -203,9 +199,9 @@ app.io.sockets.on('connection', function(socket) {
         socket.emit("add",  resources[i]);
     }
     
-    //if ( sockets.length == 1 ) {
+    if ( sockets.length == 1 ) {
         receive();
-    //}
+    }
 
     socket.on( 'selectResource', function(resource) {
         currentResource = getLocalResource(resource);
