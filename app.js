@@ -6,7 +6,7 @@ var fs = require('fs');
 var EventHubClient = require('azure-event-hubs').Client;
 var IotHubClient = require('azure-iothub').Client;
 var Message = require('azure-iot-common').Message;
-var Device = require('azure-iot-device');
+//var Device = require('azure-iot-device');
 
 app = express().http().io()
 
@@ -132,7 +132,7 @@ function send(cmd) {
         if (err) {
             console.Log('Could not open the connection to the service: ' + err.message);
         } else {
-            var deviceId = Device.ConnectionString.parse(iotHubConnectionString).DeviceId;
+            var deviceId = "SensorHub"; //Device.ConnectionString.parse(iotHubConnectionString).DeviceId;
 
             client.send(deviceId, messageData, function (err) {
                 if (err) {
