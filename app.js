@@ -114,7 +114,7 @@ function newData(socket,resource,data) {
     if ( resource ) {
         var now = (new Date()).getTime();
 
-        if ( (now - resource.lastUpdateTime ) >= interval*1000 ) {
+      //  if ( (now - resource.lastUpdateTime ) >= interval*1000 ) {
 
             socket.emit("data", resource, data);
 
@@ -123,7 +123,7 @@ function newData(socket,resource,data) {
             }
 
             resource.lastUpdateTime = now;  
-        }
+       // }
     }
 }
 
@@ -162,12 +162,7 @@ function receive() {
                         console.log(err); 
                     });
                     rx.on('message', function(message) {
-                        console.log(message.body);
-                        for(i=0; i,sockets.length; i++) {
-                            socket.emit("data", null, message.body);
-                        }
                         var body = message.body;
-                        socket.emit('history',resource, data);
                         try {
                             var resource = getResources("sensor", body.sensorType);
                             if ( resource ) {
