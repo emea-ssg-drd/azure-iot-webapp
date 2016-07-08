@@ -199,9 +199,9 @@ app.io.sockets.on('connection', function(socket) {
         socket.emit("add",  resources[i]);
     }
     
-    if ( sockets.length == 1 ) {
+ //   if ( sockets.length == 1 ) {
         receive();
-    }
+   // }
 
     socket.on( 'selectResource', function(resource) {
         currentResource = getLocalResource(resource);
