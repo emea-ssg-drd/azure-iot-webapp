@@ -543,7 +543,7 @@ socket.on('data', function(resource, new_data)
 	{
 		var v = new_data[0];
 		var ts = v[0]-zone_delta + time_offset;
-
+		console.log(resource.name + " : "+v[1]);
 		if ( current_resource && current_resource == resource ) 
 		{
 			data.push([ts+time_offset, v[1]]);
