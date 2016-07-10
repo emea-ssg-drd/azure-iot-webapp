@@ -123,31 +123,39 @@ function newData(socket,resource,data) {
     }
 }
 
-function send(cmd) {
-    var deviceId = req.params.deviceId;
-    var messageData = '{"command":' + cmd + '}';
-    
-    var client = IotHubClient.fromConnectionString(iotHubConnectionString);
-    client.open(function (err) {
-        if (err) {
-            console.Log('Could not open the connection to the service: ' + err.message);
-        } else {
-            var deviceId = "SensorHub"; //Device.ConnectionString.parse(iotHubConnectionString).DeviceId;
+function send(resource, cmd) {
+    if ( resource ) {
 
-            client.send(deviceId, messageData, function (err) {
-                if (err) {
-                    console.Log('Could not send the message to the service: ' + err.message);
-                } else {
-                    client.close(function (err) {
-                        if (err) {
-                            console.Log('Could not close the connection to the service: ' + err.message);
-                        }
-                    });
-                }
-            });
-        }
-    });
+        var messageData = JSON.stringify({
+            resourceType: resource.type,
+            resourceName: resource.name,
+            command:  cmd
+        });
+        
+        var client = IotHubClient.fromConnectionString(iotHubConnectionString);
+        client.open(function (err) {
+            if (err) {
+                console.Log('Could not open the connection to the service: ' + err.message);
+            } else {
+                var deviceId = "SensorHub"; //Device.ConnectionString.parse(iotHubConnectionString).DeviceId;
+
+                client.send(deviceId, messageData, function (err) {
+                    if (err) {
+                        console.Log('Could not send the message to the service: ' + err.message);
+                    } else {
+                        client.close(function (err) {
+                            if (err) {
+                                console.Log('Could not close the connection to the service: ' + err.message);
+                            }
+                        });
+                    }
+                });
+            }
+        });
+
+    }
 }
+
 function receive() {
     // For each partition, register a callback function
     client.getPartitionIds().then(function(ids) {
@@ -213,7 +221,7 @@ app.io.sockets.on('connection', function(socket) {
     socket.on( 'command', function(resource, cmd) {
         console.log("Command : "+resource.oic_type + " -> "+JSON.stringify(cmd))
         if ( resource ) {
-            send(cmd);  
+            send(resource,cmd);  
         }
     });
 
