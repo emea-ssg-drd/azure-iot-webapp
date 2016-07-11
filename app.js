@@ -201,6 +201,9 @@ for(var s=0; s<sockets.length;s++) {
     });
 };
 
+app.io.route('ready', function(req) {
+    receive();
+})
 //-----------------------------------------------------------------------------------------------------
 //  Connection
 //-----------------------------------------------------------------------------------------------------
@@ -218,7 +221,7 @@ app.io.sockets.on('connection', function(socket) {
     }
     
    if ( sockets.length == 1 ) {
-        receive();
+   //     receive();
    }
 
     socket.on( 'selectResource', function(resource) {
