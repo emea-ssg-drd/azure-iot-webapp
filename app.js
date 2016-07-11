@@ -138,7 +138,7 @@ function send(resource, cmd) {
                 console.Log('Could not open the connection to the service: ' + err.message);
             } else {
                 var deviceId = "SensorHub"; //Device.ConnectionString.parse(iotHubConnectionString).DeviceId;
-log("deviceId: "+deviceId);  
+log("send: "+deviceId + " : "+messageData);  
         
                 client.send(deviceId, messageData, function (err) {
                     if (err) {
@@ -197,10 +197,7 @@ function receive() {
     });
 };
 
-app.io.route('ready', function(req) {
-    log("ready");
-    
-})
+
 //-----------------------------------------------------------------------------------------------------
 //  Connection
 //-----------------------------------------------------------------------------------------------------
@@ -229,12 +226,9 @@ app.io.sockets.on('connection', function(socket) {
     });
 
     socket.on( 'command', function(resource, cmd) {
-        console.log("Command : "+resource.oic_type + " -> "+JSON.stringify(cmd));
         resource = getLocalResource(resource);
-
-       log("Command : "+resource.oic_type + " -> "+JSON.stringify(cmd));  
-        
         if ( resource ) {
+            log("Command : "+resource.type + "."+resource.name + " -> "+JSON.stringify(cmd));  
             send(resource,cmd);  
         }
     });
