@@ -10,7 +10,7 @@
 }
 .toggle-light .toggle-on,
 .toggle-light .toggle-select .toggle-inner .active {
-  background: #45a31f;
+  background: #27a7df;
   -webkit-box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.2);
           box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.2);
   text-shadow: 1px 1px rgba(0, 0, 0, 0.2);

@@ -8,7 +8,7 @@ body {
 
 h1 {
    // text-shadow: -1px -1px 1px #d4d4d4, 1px 1px 1px #999;
-    color: #336699;
+    color: #27a7df;
  //   opacity: 0.5;
     font: 80px 'Open Sans', sans-serif;
     text-align:center;
@@ -96,7 +96,7 @@ input[type=range] {
     height: 4px;
     width: 60px;
     border: 0px solid #bdc3c7;
-    background-color: #45a31f;
+    background-color: #27a7df;
     vertical-align: middle;
     margin-top: 10px;
     margin-bottom: 10px;

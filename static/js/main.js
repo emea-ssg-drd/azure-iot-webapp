@@ -602,7 +602,7 @@ function flot()
 			{
 				show: limit==30 ? true : false,
 				fill: true,
-				fillColor: '#45a31f',
+				fillColor: '#27a7df',
 				radius: 4,
 			},
 		}
