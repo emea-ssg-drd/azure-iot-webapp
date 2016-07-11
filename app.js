@@ -6,7 +6,7 @@ var fs = require('fs');
 var EventHubClient = require('azure-event-hubs').Client;
 var IotHubClient = require('azure-iothub').Client;
 var Message = require('azure-iot-common').Message;
-var Device = require('azure-iot-device');
+//var Device = require('azure-iot-device');
 
 app = express().http().io()
 
@@ -83,7 +83,7 @@ resources.push ({"name":"cpu", "type":"system"})
 
 function history(socket,data,period,resource,max) {
     var ago =  (new Date()).getTime() - period*1000;
-
+    return;
     if ( data && data.length > 0 ) {
         var all_d=[];
         var ratio = Math.ceil(data.length/max);
@@ -137,7 +137,7 @@ function send(resource, cmd) {
             if (err) {
                 console.Log('Could not open the connection to the service: ' + err.message);
             } else {
-                var deviceId = Device.ConnectionString.parse(iotHubConnectionString).DeviceId;
+                var deviceId = "SensorHub"; //Device.ConnectionString.parse(iotHubConnectionString).DeviceId;
 for(var s=0; s<sockets.length;s++) {
           socket[s].emit("log",  "deviceId: "+deviceId);  
         }
@@ -202,9 +202,7 @@ for(var s=0; s<sockets.length;s++) {
 app.io.sockets.on('connection', function(socket) {
  
     console.log('New connection from :  ' + socket.handshake.address);
-     for(var s=0; s<sockets.length;s++) {
-          socket[s].emit("log",  "New connection from :  ");  
-        }
+    
     socket.emit('init', { interval:interval, limit:limit, time:(new Date()).getTime()} );
 
     sockets.push(socket);
