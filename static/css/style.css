@@ -85,7 +85,7 @@ body {
     font-weight:bold;
     font-family: 'Open Sans';
     font-size: 17px;
-    border-bottom: 1px solid green;
+    border-bottom: 1px solid #27a7df;
     margin-bottom: 10px;
 }
 
@@ -351,7 +351,7 @@ input[name=history] {
 }
 
 .jcarousel-pagination a.active {
-    background: green;
+    background: #27a7df;
 
     color: #ff00ff;
     opacity: 1;
