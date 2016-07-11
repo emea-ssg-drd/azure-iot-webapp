@@ -172,7 +172,7 @@ function receive() {
                     });
                     rx.on('message', function(message) {
                         var body = message.body;
-                        log("receive : " + body.sensorType + " : "body.sensorValue);
+                        log("receive : " + body.sensorType + " : "+body.sensorValue);
                         try {
                             var resource = getResources("sensor", body.sensorType);
                             if ( resource ) {
