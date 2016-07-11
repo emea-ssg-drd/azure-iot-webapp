@@ -123,7 +123,7 @@ function newData(socket,resource,data) {
     }
 }
 
-function send(resource, cmd) {
+function cloud2Device(resource, cmd) {
     if ( resource ) {
 
         var messageData = JSON.stringify({
@@ -159,7 +159,7 @@ log("send: "+deviceId + " : "+messageData);
 function log(msg) {
     app.io.broadcast("log", msg);
 }
-function receive() {
+function device2Cloud() {
     // For each partition, register a callback function
    
     client.getPartitionIds().then(function(ids) {
@@ -229,7 +229,7 @@ app.io.sockets.on('connection', function(socket) {
         resource = getLocalResource(resource);
         if ( resource ) {
             log("Command : "+resource.type + "."+resource.name + " -> "+JSON.stringify(cmd));  
-            send(resource,cmd);  
+            cloud2Device(resource,cmd);  
         }
     });
 
