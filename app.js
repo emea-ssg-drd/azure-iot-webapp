@@ -124,7 +124,10 @@ function newData(socket,resource,data) {
 }
 
 function cloud2Device(resource, cmd) {
+    log("send1: ");  
+
     if ( resource ) {
+    log("send2: /"+iotHubConnectionString+"/");  
 
         var messageData = JSON.stringify({
             resourceType: resource.type,
@@ -134,6 +137,8 @@ function cloud2Device(resource, cmd) {
         
         var client = IotHubClient.fromConnectionString(iotHubConnectionString);
         client.open(function (err) {
+                log("send3: ");  
+
             if (err) {
                 console.Log('Could not open the connection to the service: ' + err.message);
             } else {
@@ -226,10 +231,11 @@ app.io.sockets.on('connection', function(socket) {
     });
 
     socket.on( 'command', function(resource, cmd) {
-        resource = getLocalResource(resource);
-        if ( resource ) {
-            log("Command : "+resource.type + "."+resource.name + " -> "+JSON.stringify(cmd));  
-            cloud2Device(resource,cmd);  
+        var localResource = getLocalResource(resource);
+        log("Command1 : "+localResource.type + "."+localResource.name);
+        if ( localResource ) {
+            log("Command2 : "+localResource.type + "."+localResource.name + " -> "+JSON.stringify(cmd));  
+            cloud2Device(localResource,cmd);  
         }
     });
 
