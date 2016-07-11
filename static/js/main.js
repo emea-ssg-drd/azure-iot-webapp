@@ -1120,5 +1120,7 @@ $(function()
             }
         });
 });
+
+socket.emit('ready');
  
  // 300 20 39   
