@@ -179,12 +179,12 @@ log(body);
                             if ( resource ) {
                                 var data = [];
                                 data.push([(new Date()).getTime(), body.sensorValue]);
-                                for(i=0; i,sockets.length; i++) {
+                                for(var i=0; i,sockets.length; i++) {
                                     newData(sockets[i],resource,data);
                                 }
                             }
                             else if ( resource == getResources("system", body.sensorType) ) {
-                                for(i=0; i<sockets.length; i++) {
+                                for(var i=0; i<sockets.length; i++) {
                                     sockets[i].emit('system', { cpu:body.cpu, ram: body.ram });
                                 }
                             }
@@ -200,6 +200,10 @@ log(body);
 
 app.io.route('ready', function(req) {
     log("ready");
+    for(var i=0;i<resources.length;i++) {
+        resources[i].lastUpdateTime = (new Date()).getTime();
+        app.io.broadcast("add",  resources[i]);
+    }
     receive();
 })
 //-----------------------------------------------------------------------------------------------------
@@ -213,14 +217,9 @@ app.io.sockets.on('connection', function(socket) {
 
     sockets.push(socket);
 
-    for(i=0;i<resources.length;i++) {
-        resources[i].lastUpdateTime = (new Date()).getTime();
-        socket.emit("add",  resources[i]);
-    }
     
-   if ( sockets.length == 1 ) {
-   //     receive();
-   }
+    
+
 
     socket.on( 'selectResource', function(resource) {
         currentResource = getLocalResource(resource);
@@ -253,7 +252,7 @@ app.io.sockets.on('connection', function(socket) {
         if(!isNaN(d)) {
             limit = d;
             if ( currentResource ) {
-                history(socket,null,limit,currentResource,500);
+                //history(socket,null,limit,currentResource,500);
             }
         }
     });
