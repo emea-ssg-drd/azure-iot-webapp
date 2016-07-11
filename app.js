@@ -161,10 +161,9 @@ function log(msg) {
 }
 function receive() {
     // For each partition, register a callback function
-    log("receive 1");
+    log("=== receive ");
     client.getPartitionIds().then(function(ids) {
         ids.forEach(function(id) {
-                      log("receive 2");  
 
             client.createReceiver('$Default', id, { startAfterTime: Date.now() })
                 .then(function(rx) {
@@ -173,7 +172,7 @@ function receive() {
                     });
                     rx.on('message', function(message) {
                         var body = message.body;
-log(body);
+                        log("receive : " + body);
                         try {
                             var resource = getResources("sensor", body.sensorType);
                             if ( resource ) {
@@ -200,11 +199,7 @@ log(body);
 
 app.io.route('ready', function(req) {
     log("ready");
-    for(var i=0;i<resources.length;i++) {
-        resources[i].lastUpdateTime = (new Date()).getTime();
-        app.io.broadcast("add",  resources[i]);
-    }
-    receive();
+    
 })
 //-----------------------------------------------------------------------------------------------------
 //  Connection
@@ -213,13 +208,18 @@ app.io.sockets.on('connection', function(socket) {
  
     console.log('New connection from :  ' + socket.handshake.address);
     
-    socket.emit('init', { interval:interval, limit:limit, time:(new Date()).getTime()} );
-
     sockets.push(socket);
 
-    
-    
+    socket.emit('init', { interval:interval, limit:limit, time:(new Date()).getTime()} );
 
+    for(var i=0;i<resources.length;i++) {
+        resources[i].lastUpdateTime = (new Date()).getTime();
+        socket.emt("add",  resources[i]);
+    }
+
+    if ( sockets.length == 1 ) {
+        receive();
+    }
 
     socket.on( 'selectResource', function(resource) {
         currentResource = getLocalResource(resource);
@@ -238,7 +238,6 @@ app.io.sockets.on('connection', function(socket) {
             send(resource,cmd);  
         }
     });
-
 
     socket.on( 'reqint', function(d) {
         if(!isNaN(d)) {

@@ -2,7 +2,6 @@
 /*  Global Data   */
 /*-------------------------------------------------------------------------------------------------------------------*/
 
-var socket=io.connect();
 var init_done = false;
 var data=[];
 var zone_delta=(new Date()).getTimezoneOffset()*60000;	// time diff in ms
@@ -464,240 +463,8 @@ function resourceNewData(resource, val) {
 		}
 	}
 }
-/*-------------------------------------------------------------------------------------------------------------------*/
-/*  To Client   */
-/*-------------------------------------------------------------------------------------------------------------------*/
-
-function command(resource,cmd) {
-	if ( resource ) {
-		console.log("command : " + resource.type + "." + resource.name + "->" + JSON.stringify(cmd))
-		socket.emit("command", resource, cmd )
-	}
-}
-
-/*-------------------------------------------------------------------------------------------------------------------*/
-/*  From Client   */
-/*-------------------------------------------------------------------------------------------------------------------*/
-socket.on('init', function(v) 
-{
-	if ( init_done == false ) {
-		$('.toggle[name=autoscroll]').toggles(false);
-		$('.toggle[name=autoscroll]').toggles(true);
-
-		$("#realtimeflot").height($('#history').height() - $('#control[name=history]').outerHeight(true)  - $("#container_name").outerHeight(true));
-
-		$("#main").width($(".peripheral").outerWidth(true) + $("#history").outerWidth(true) + $("#controls").outerWidth(true)  );
-		$(".jcarousel-wrapper").height($('.'+sensor_container_class).outerWidth(true));
-		$("#main").height($("#controls").outerWidth(true) + $(".jcarousel-wrapper").outerHeight(true));
-
-		$('.autoplug').hide();
-
-		limit = v.limit;
-
-		time_offset = ((new Date()).getTime() -v.time);
-
-		for(i=0;i<periods.length; i++) 
-		{
-			if ( limit == periods[i].value ) 
-			{
-				$('input[name=history]').val(i+1).change();
-			}
-		}
-
-		data = [];
-
-		flot();
-
-		init_done = true;
-	}
-});
 
 
-socket.on('history', function(resource, a, clear) 
-{
-	resource = getLocalResource(resource);
-	if ( resource ) {
-		if ( clear == true) 
-		{
-			data = [];
-		}
-
-		if ( current_resource && current_resource == resource ) 
-		{
-			for (i=0; i<a.length; i++) 
-			{
-				var v = a[i];
-				var ts = v[0]-zone_delta+time_offset ;
-
-				data.push([ts, v[1]]);
-			}
-		}   
-	}
-});
-
-socket.on('log',function(log)
-{
-console.log(log)
-})
-
-socket.on('data', function(resource, new_data) 
-{
-	resource = getLocalResource(resource);
-	if ( resource && new_data.length > 0 ) 
-	{
-		var v = new_data[0];
-		var ts = v[0]-zone_delta + time_offset;
-		console.log(resource.name + " : "+v[1]);
-		if ( current_resource && current_resource == resource ) 
-		{
-			data.push([ts+time_offset, v[1]]);
-		}
-		if ( resource.canvas  ) 
-		{
-			var val = v[1];
-			if ( resource.sum ) {
-				resource.sum += val;
-				val = resource.sum;
-			}
-
-			resource.canvas.setValue(val);
-
-			resourceNewData(resource, val)
-
-			var ledColor = resource.ledColor;
-			if ( ledColor != null && resource.output.hasOwnProperty('min') && resource.output.hasOwnProperty('max')) 
-			{
-				if ( v[1] < resource.output.min || v[1] > resource.output.max ) 
-				{
-					ledColor  = steelseries.LedColor.RED_LED;
-				}
-				else 
-				{
-					ledColor = steelseries.LedColor.GREEN_LED;
-				}
-
-				if ( ledColor != resource.ledColor ) 
-				{
-					resource.ledColor = ledColor;
-				//	resource.canvas.setLedColor(sensor.ledColor);
-				}
-			}
-
-			if ( v[1] >= resource.threshold ) 
-			{
-				resource.alert = true;
-			} 
-			else 
-			{
-				resource.alert = false;
-			}
-		}
-		else
-		{
-			return;
-		}
-
-		// alerts
-		var new_alert = false;
-		for(i=0; i<resources.length; i++) 
-		{
-			if ( resources[i].alert == true ) 
-			{
-				new_alert = true;
-				break;
-			}
-		}
-
-		if ( alert_on != new_alert  ) 
-		{
-			alert_on = new_alert ;
-			if ( alert_on == true ) 
-			{
-				command(getResources("alarm", "main"), {state:"on"})
-			}
-			else 
-			{
-				command(getResources("alarm", "main"), {state:"off"})
-			}
-		}
-	}
-});
-
-socket.on('event', function(resource, data) 
-{
-	resource = getLocalResource(resource);
-
-	if ( resource && data == true) {
-		if ( isResource(resource, "doorbell", "main") ) {
-			command(getResources("light","car"),{state:"off"});
-
-			var garage = getResources("door", "garage");
-			if ( garage ) {
-				if ( garage.peripheral_toogle && garage.peripheral_toogle.active ) {	
-				 	if ( garage.door_garage_manual ) {
-						garage.door_garage_manual.toggles(false);
-					}
-				}
-			}
-		}
-	}
-});
-
-
-socket.on('add', function(resource) 
-{
-	var default_disp = false;
-	
-	if ( resource.type == "sensor"  || resource.type == "system" ) 
-	{
-		default_disp = true;
-		if ( resource.type == "sensor" ) {
-			addResource({"type" : "cloud", "name" : "sensor"})
-		}
-	}
-	
-	else if ( resource.type == "geolocalisation" ) 
-	{
-		if(navigator.geolocation) 
-		{
-			geolocalisation_enabled = true;
-		}
-		else 
-		{
-			geolocalisation_enabled = false;
-		}
-	}
-	
-	addResource(resource, default_disp);
-
-
-	updateDisplay();
-});
-
-socket.on('system', function(v) 
-{
-	var system = getResources("system","cpu");
-
-	if ( system ) {
-		if ( system.canvas_cpu ) {
-			system.canvas_cpu.setValue(v.cpu);
-		}
-
-		if ( system.canvas_ram ) {
-			system.canvas_ram.setValue(v.ram);
-		}
-	}
-})
-
-socket.on('gps', function(position) 
-{
-	console.log(position.latitude +" : "+position.longitude);
-
-	if ( geolocalisation_enabled ) 
-	{
-		showCurrentLocation(position.latitude, position.longitude);
-	}
-})
 
 /*-------------------------------------------------------------------------------------------------------------------*/
 /*  Display   */
@@ -1121,6 +888,223 @@ $(function()
         });
 });
 
-socket.emit('ready');
+/*-------------------------------------------------------------------------------------------------------------------*/
+/*  From Client   */
+/*-------------------------------------------------------------------------------------------------------------------*/
+var socket=io.connect();
+
+socket.on('init', function(v) 
+{
+	if ( init_done == false ) {
+		$('.toggle[name=autoscroll]').toggles(false);
+		$('.toggle[name=autoscroll]').toggles(true);
+
+		$("#realtimeflot").height($('#history').height() - $('#control[name=history]').outerHeight(true)  - $("#container_name").outerHeight(true));
+
+		$("#main").width($(".peripheral").outerWidth(true) + $("#history").outerWidth(true) + $("#controls").outerWidth(true)  );
+		$(".jcarousel-wrapper").height($('.'+sensor_container_class).outerWidth(true));
+		$("#main").height($("#controls").outerWidth(true) + $(".jcarousel-wrapper").outerHeight(true));
+
+		$('.autoplug').hide();
+
+		limit = v.limit;
+
+		time_offset = ((new Date()).getTime() -v.time);
+
+		for(i=0;i<periods.length; i++) 
+		{
+			if ( limit == periods[i].value ) 
+			{
+				$('input[name=history]').val(i+1).change();
+			}
+		}
+
+		data = [];
+
+		flot();
+
+		init_done = true;
+	}
+});
+
+
+socket.on('history', function(resource, a, clear) 
+{
+	resource = getLocalResource(resource);
+	if ( resource ) {
+		if ( clear == true) 
+		{
+			data = [];
+		}
+
+		if ( current_resource && current_resource == resource ) 
+		{
+			for (i=0; i<a.length; i++) 
+			{
+				var v = a[i];
+				var ts = v[0]-zone_delta+time_offset ;
+
+				data.push([ts, v[1]]);
+			}
+		}   
+	}
+});
+
+socket.on('log',function(log)
+{
+console.log("LOG :"+log)
+})
+
+socket.on('data', function(resource, new_data) 
+{
+	console.log("New Data "+resource.type +"."+resource.name);
+	resource = getLocalResource(resource);
+	if ( resource && new_data.length > 0 ) 
+	{
+		var v = new_data[0];
+		var ts = v[0]-zone_delta + time_offset;
+		console.log(resource.name + " : "+v[1]);
+		if ( current_resource && current_resource == resource ) 
+		{
+			data.push([ts+time_offset, v[1]]);
+		}
+		if ( resource.canvas  ) 
+		{
+			var val = v[1];
+			if ( resource.sum ) {
+				resource.sum += val;
+				val = resource.sum;
+			}
+
+			resource.canvas.setValue(val);
+
+			resourceNewData(resource, val)
+
+			var ledColor = resource.ledColor;
+			if ( ledColor != null && resource.output.hasOwnProperty('min') && resource.output.hasOwnProperty('max')) 
+			{
+				if ( v[1] < resource.output.min || v[1] > resource.output.max ) 
+				{
+					ledColor  = steelseries.LedColor.RED_LED;
+				}
+				else 
+				{
+					ledColor = steelseries.LedColor.GREEN_LED;
+				}
+
+				if ( ledColor != resource.ledColor ) 
+				{
+					resource.ledColor = ledColor;
+				//	resource.canvas.setLedColor(sensor.ledColor);
+				}
+			}
+
+			if ( v[1] >= resource.threshold ) 
+			{
+				resource.alert = true;
+			} 
+			else 
+			{
+				resource.alert = false;
+			}
+		}
+		else
+		{
+			return;
+		}
+
+		// alerts
+		var new_alert = false;
+		for(i=0; i<resources.length; i++) 
+		{
+			if ( resources[i].alert == true ) 
+			{
+				new_alert = true;
+				break;
+			}
+		}
+
+		if ( alert_on != new_alert  ) 
+		{
+			alert_on = new_alert ;
+			if ( alert_on == true ) 
+			{
+				command(getResources("alarm", "main"), {state:"on"})
+			}
+			else 
+			{
+				command(getResources("alarm", "main"), {state:"off"})
+			}
+		}
+	}
+});
+
+
+
+socket.on('add', function(resource) 
+{
+	var default_disp = false;
+	
+	if ( resource.type == "sensor"  || resource.type == "system" ) 
+	{
+		default_disp = true;
+		if ( resource.type == "sensor" ) {
+			addResource({"type" : "cloud", "name" : "sensor"})
+		}
+	}
+	
+	else if ( resource.type == "geolocalisation" ) 
+	{
+		if(navigator.geolocation) 
+		{
+			geolocalisation_enabled = true;
+		}
+		else 
+		{
+			geolocalisation_enabled = false;
+		}
+	}
+	
+	addResource(resource, default_disp);
+
+
+	updateDisplay();
+});
+
+socket.on('system', function(v) 
+{
+	var system = getResources("system","cpu");
+
+	if ( system ) {
+		if ( system.canvas_cpu ) {
+			system.canvas_cpu.setValue(v.cpu);
+		}
+
+		if ( system.canvas_ram ) {
+			system.canvas_ram.setValue(v.ram);
+		}
+	}
+})
+
+socket.on('gps', function(position) 
+{
+	console.log(position.latitude +" : "+position.longitude);
+
+	if ( geolocalisation_enabled ) 
+	{
+		showCurrentLocation(position.latitude, position.longitude);
+	}
+})
+
+/*-------------------------------------------------------------------------------------------------------------------*/
+/*  To Client   */
+/*-------------------------------------------------------------------------------------------------------------------*/
+
+function command(resource,cmd) {
+	if ( resource ) {
+		console.log("command : " + resource.type + "." + resource.name + "->" + JSON.stringify(cmd))
+		socket.emit("command", resource, cmd )
+	}
+}
  
  // 300 20 39   
