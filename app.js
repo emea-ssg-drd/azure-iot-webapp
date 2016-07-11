@@ -6,7 +6,7 @@ var fs = require('fs');
 var EventHubClient = require('azure-event-hubs').Client;
 var IotHubClient = require('azure-iothub').Client;
 var Message = require('azure-iot-common').Message;
-//var Device = require('azure-iot-device');
+var Device = require('azure-iot-device');
 
 app = express().http().io()
 
@@ -137,8 +137,10 @@ function send(resource, cmd) {
             if (err) {
                 console.Log('Could not open the connection to the service: ' + err.message);
             } else {
-                var deviceId = "SensorHub"; //Device.ConnectionString.parse(iotHubConnectionString).DeviceId;
-
+                var deviceId = Device.ConnectionString.parse(iotHubConnectionString).DeviceId;
+for(var s=0; s<sockets.length;s++) {
+          socket[s].emit("log",  "deviceId: "+deviceId);  
+        }
                 client.send(deviceId, messageData, function (err) {
                     if (err) {
                         console.Log('Could not send the message to the service: ' + err.message);
@@ -167,6 +169,9 @@ function receive() {
                     });
                     rx.on('message', function(message) {
                         var body = message.body;
+for(var s=0; s<sockets.length;s++) {
+          socket[s].emit("log",  body);  
+        }
                         try {
                             var resource = getResources("sensor", body.sensorType);
                             if ( resource ) {
@@ -175,7 +180,6 @@ function receive() {
                                 for(i=0; i,sockets.length; i++) {
                                     newData(sockets[i],resource,data);
                                 }
-                                socket.emit("data", resource, data);
                             }
                             else if ( resource == getResources("system", body.sensorType) ) {
                                 for(i=0; i<sockets.length; i++) {
@@ -198,6 +202,9 @@ function receive() {
 app.io.sockets.on('connection', function(socket) {
  
     console.log('New connection from :  ' + socket.handshake.address);
+     for(var s=0; s<sockets.length;s++) {
+          socket[s].emit("log",  "New connection from :  ");  
+        }
     socket.emit('init', { interval:interval, limit:limit, time:(new Date()).getTime()} );
 
     sockets.push(socket);
@@ -207,9 +214,9 @@ app.io.sockets.on('connection', function(socket) {
         socket.emit("add",  resources[i]);
     }
     
- //   if ( sockets.length == 1 ) {
+   if ( sockets.length == 1 ) {
         receive();
-   // }
+   }
 
     socket.on( 'selectResource', function(resource) {
         currentResource = getLocalResource(resource);
@@ -219,7 +226,12 @@ app.io.sockets.on('connection', function(socket) {
     });
 
     socket.on( 'command', function(resource, cmd) {
-        console.log("Command : "+resource.oic_type + " -> "+JSON.stringify(cmd))
+        console.log("Command : "+resource.oic_type + " -> "+JSON.stringify(cmd));
+        resource = getLocalResource(resource);
+
+        for(var s=0; s<sockets.length;s++) {
+          socket[s].emit("log",  "Command : "+resource.oic_type + " -> "+JSON.stringify(cmd));  
+        }
         if ( resource ) {
             send(resource,cmd);  
         }

@@ -535,6 +535,10 @@ socket.on('history', function(resource, a, clear)
 	}
 });
 
+socket.on('log',function(log)
+{
+console.log(log)
+})
 
 socket.on('data', function(resource, new_data) 
 {
