@@ -114,12 +114,12 @@ function newData(socket,resource,data) {
     if ( resource ) {
         var now = (new Date()).getTime();
 
-        if ( (now - resource.lastUpdateTime ) >= interval*1000 ) {
+      //  if ( (now - resource.lastUpdateTime ) >= interval*1000 ) {
 
             socket.emit("data", resource, data);
 
             resource.lastUpdateTime = now;  
-        }
+        //}
     }
 }
 
@@ -161,7 +161,7 @@ function log(msg) {
 }
 function receive() {
     // For each partition, register a callback function
-    log("=== receive ");
+   
     client.getPartitionIds().then(function(ids) {
         ids.forEach(function(id) {
 
@@ -172,7 +172,7 @@ function receive() {
                     });
                     rx.on('message', function(message) {
                         var body = message.body;
-                        log("receive : " + body);
+                        log("receive : " + body.sensorType + " : "body.sensorValue);
                         try {
                             var resource = getResources("sensor", body.sensorType);
                             if ( resource ) {

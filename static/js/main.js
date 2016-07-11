@@ -957,7 +957,7 @@ console.log("LOG :"+log)
 
 socket.on('data', function(resource, new_data) 
 {
-	console.log("New Data "+resource.type +"."+resource.name);
+	console.log("========= New Data "+resource.type +"."+resource.name);
 	resource = getLocalResource(resource);
 	if ( resource && new_data.length > 0 ) 
 	{
