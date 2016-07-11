@@ -138,9 +138,8 @@ function send(resource, cmd) {
                 console.Log('Could not open the connection to the service: ' + err.message);
             } else {
                 var deviceId = "SensorHub"; //Device.ConnectionString.parse(iotHubConnectionString).DeviceId;
-for(var s=0; s<sockets.length;s++) {
-          socket[s].emit("log",  "deviceId: "+deviceId);  
-        }
+log("deviceId: "+deviceId);  
+        
                 client.send(deviceId, messageData, function (err) {
                     if (err) {
                         console.Log('Could not send the message to the service: ' + err.message);
@@ -157,15 +156,15 @@ for(var s=0; s<sockets.length;s++) {
 
     }
 }
-
+function log(msg) {
+    app.io.broadcast("log", msg);
+}
 function receive() {
     // For each partition, register a callback function
-    for(var s=0; s<sockets.length;s++) {
-          socket[s].emit("log",  "receive 1");  
-        }
+    log("receive 1");
     client.getPartitionIds().then(function(ids) {
         ids.forEach(function(id) {
-                      socket[s].emit("log",  "receive 2");  
+                      log("receive 2");  
 
             client.createReceiver('$Default', id, { startAfterTime: Date.now() })
                 .then(function(rx) {
@@ -174,9 +173,7 @@ function receive() {
                     });
                     rx.on('message', function(message) {
                         var body = message.body;
-for(var s=0; s<sockets.length;s++) {
-          socket[s].emit("log",  body);  
-        }
+log(body);
                         try {
                             var resource = getResources("sensor", body.sensorType);
                             if ( resource ) {
@@ -202,6 +199,7 @@ for(var s=0; s<sockets.length;s++) {
 };
 
 app.io.route('ready', function(req) {
+    log("ready");
     receive();
 })
 //-----------------------------------------------------------------------------------------------------
@@ -235,9 +233,8 @@ app.io.sockets.on('connection', function(socket) {
         console.log("Command : "+resource.oic_type + " -> "+JSON.stringify(cmd));
         resource = getLocalResource(resource);
 
-        for(var s=0; s<sockets.length;s++) {
-          socket[s].emit("log",  "Command : "+resource.oic_type + " -> "+JSON.stringify(cmd));  
-        }
+       log("Command : "+resource.oic_type + " -> "+JSON.stringify(cmd));  
+        
         if ( resource ) {
             send(resource,cmd);  
         }
