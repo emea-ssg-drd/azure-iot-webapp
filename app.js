@@ -160,8 +160,13 @@ for(var s=0; s<sockets.length;s++) {
 
 function receive() {
     // For each partition, register a callback function
+    for(var s=0; s<sockets.length;s++) {
+          socket[s].emit("log",  "receive 1");  
+        }
     client.getPartitionIds().then(function(ids) {
         ids.forEach(function(id) {
+                      socket[s].emit("log",  "receive 2");  
+
             client.createReceiver('$Default', id, { startAfterTime: Date.now() })
                 .then(function(rx) {
                     rx.on('errorReceived', function(err) {
