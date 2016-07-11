@@ -214,7 +214,7 @@ app.io.sockets.on('connection', function(socket) {
 
     for(var i=0;i<resources.length;i++) {
         resources[i].lastUpdateTime = (new Date()).getTime();
-        socket.emt("add",  resources[i]);
+        socket.emit("add",  resources[i]);
     }
 
     if ( sockets.length == 1 ) {
