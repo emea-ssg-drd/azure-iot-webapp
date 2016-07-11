@@ -215,7 +215,7 @@ app.io.sockets.on('connection', function(socket) {
     }
 
     if ( sockets.length == 1 ) {
-        receive();
+        device2Cloud();
     }
 
     socket.on( 'selectResource', function(resource) {
